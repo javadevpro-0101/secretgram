@@ -1,0 +1,13 @@
+{
+  "name": "telegram-clone-server",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Telegramga o'xshash chat: Google login, profil, username, real vaqt xabarlari",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

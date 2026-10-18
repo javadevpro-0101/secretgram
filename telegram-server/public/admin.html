@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin panel</title>
+<style>
+  :root {
+    --bg: #17212b; --panel: #232e3c; --panel-2: #1c2733; --accent: #5288c1; --text: #f5f5f5;
+    --muted: #8a9ba8; --border: #111a24; --danger: #ff6b6b; --ok: #7bc862; --warn: #e5ca77;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  button, input { font: inherit; }
+  .hidden { display: none !important; }
+
+  /* Login */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(160deg, #0e1621, #17212b); }
+  .login-card { background: var(--panel); padding: 32px 28px; border-radius: 14px; width: min(92vw, 360px); box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+  .login-card h1 { font-size: 20px; margin-bottom: 4px; }
+  .login-card p { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .login-card input { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid #334155; background: var(--panel-2); color: var(--text); outline: none; margin-bottom: 10px; }
+  .login-card input:focus { border-color: var(--accent); }
+  .err { color: var(--danger); font-size: 13px; min-height: 18px; margin-bottom: 6px; }
+
+  /* Layout */
+  header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  header h1 { font-size: 18px; flex: 1; }
+  header .stats { font-size: 13px; color: var(--muted); }
+  .tabs { display: flex; gap: 4px; background: var(--panel); padding: 0 20px; border-bottom: 1px solid var(--border); }
+  .tab { background: none; border: none; color: var(--muted); padding: 12px 14px; cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+
+  .btn { padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; background: var(--accent); color: #fff; font-size: 14px; }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid #334155; }
+  .btn.danger { background: #8b3a3a; }
+  .btn.warn { background: #7a6a2a; }
+  .btn.small { padding: 5px 10px; font-size: 13px; }
+
+  .panel { background: var(--panel); border-radius: 12px; padding: 18px; margin-bottom: 18px; }
+  .panel h2 { font-size: 15px; margin-bottom: 12px; }
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .form-row label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--muted); flex: 1; min-width: 150px; }
+  .form-row input { padding: 9px 11px; border-radius: 8px; border: 1px solid #334155; background: var(--panel-2); color: var(--text); outline: none; }
+  .form-row input:focus { border-color: var(--accent); }
+  .msg-line { font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  th { color: var(--muted); font-weight: 500; font-size: 13px; }
+  td .sub { color: var(--muted); font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  .badge.admin { background: #2b5278; }
+  .badge.blocked { background: #8b3a3a; }
+  .badge.ok { background: #3b5a2b; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .table-wrap { overflow-x: auto; }
+  .search-in { width: 100%; max-width: 320px; padding: 9px 12px; border-radius: 8px; border: 1px solid #334155; background: var(--panel-2); color: var(--text); outline: none; margin-bottom: 12px; }
+  .empty { color: var(--muted); padding: 20px; text-align: center; }
+
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 20; padding: 20px; }
+  .modal-bg.show { display: flex; }
+  .modal { background: var(--panel); border-radius: 14px; padding: 20px; width: min(94vw, 560px); max-height: 85vh; display: flex; flex-direction: column; }
+  .modal h3 { margin-bottom: 4px; }
+  .modal .sub { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  .modal .body { overflow-y: auto; flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--panel-2); }
+  .modal .foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  .m-msg { margin-bottom: 10px; }
+  .m-msg .who { font-size: 12px; color: var(--accent); }
+  .m-msg .txt { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
+  .m-msg .t { font-size: 11px; color: var(--muted); }
+  .note { font-size: 12px; color: var(--warn); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- Admin login -->
+<div id="loginView" class="login-wrap">
+  <form class="login-card" id="loginForm">
+    <h1>Admin panel</h1>
+    <p>Admin login va parol bilan kiring</p>
+    <input type="text" id="aLogin" placeholder="Login" autocomplete="username" />
+    <input type="password" id="aPass" placeholder="Parol" autocomplete="current-password" />
+    <div class="err" id="loginErr"></div>
+    <button class="btn" style="width:100%;padding:11px" type="submit">Kirish</button>
+  </form>
+</div>
+
+<!-- Panel -->
+<div id="panelView" class="hidden">
+  <header>
+    <h1>🛡 Admin panel</h1>
+    <div class="stats" id="stats"></div>
+    <a class="btn ghost small" href="/">Chatga qaytish</a>
+    <button class="btn danger small" id="logoutBtn">Chiqish</button>
+  </header>
+  <div class="tabs">
+    <button class="tab active" data-tab="users">Foydalanuvchilar</button>
+    <button class="tab" data-tab="create">Yangi foydalanuvchi</button>
+    <button class="tab" data-tab="chats">Barcha chatlar</button>
+  </div>
+
+  <main>
+    <!-- Users -->
+    <section id="tab-users">
+      <input type="text" class="search-in" id="userSearch" placeholder="Qidirish: ism yoki login..." />
+      <div class="panel table-wrap">
+        <table>
+          <thead><tr><th>Foydalanuvchi</th><th>Chatlar</th><th>Holat</th><th>Qo'shilgan</th><th>Amallar</th></tr></thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+        <div class="empty hidden" id="usersEmpty">Foydalanuvchi topilmadi</div>
+      </div>
+    </section>
+
+    <!-- Create -->
+    <section id="tab-create" class="hidden">
+      <div class="panel">
+        <h2>Yangi foydalanuvchi yaratish</h2>
+        <div class="form-row">
+          <label>Login (username)
+            <input type="text" id="cUsername" placeholder="ali_01" maxlength="32" autocomplete="off" />
+          </label>
+          <label>Ism
+            <input type="text" id="cName" placeholder="Ali" maxlength="40" autocomplete="off" />
+          </label>
+          <label>Parol (kamida 6 belgi)
+            <input type="text" id="cPassword" placeholder="parol" autocomplete="off" />
+          </label>
+          <button class="btn" id="createBtn">Yaratish</button>
+        </div>
+        <div class="msg-line" id="createMsg"></div>
+        <div class="note">Login: harf bilan boshlansin, 5–32 belgi, faqat a–z, 0–9 va _. Parolni foydalanuvchiga o'zingiz yetkazing.</div>
+      </div>
+    </section>
+
+    <!-- Chats -->
+    <section id="tab-chats" class="hidden">
+      <input type="text" class="search-in" id="chatSearch" placeholder="Qidirish: foydalanuvchi nomi..." />
+      <div class="panel table-wrap">
+        <table>
+          <thead><tr><th>Ishtirokchilar</th><th>Xabarlar</th><th>So'nggi faollik</th><th>Amallar</th></tr></thead>
+          <tbody id="chatsBody"></tbody>
+        </table>
+        <div class="empty hidden" id="chatsEmpty">Chatlar yo'q</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Edit user modal -->
+<div class="modal-bg" id="editModal">
+  <div class="panel" style="width:min(92vw,400px);margin:0">
+    <h2 id="editTitle">Tahrirlash</h2>
+    <div class="form-row" style="flex-direction:column;align-items:stretch">
+      <label>Ism <input type="text" id="eName" maxlength="40" /></label>
+      <label>Login <input type="text" id="eUsername" maxlength="32" /></label>
+      <label>Yangi parol (bo'sh qoldirsangiz o'zgarmaydi) <input type="text" id="ePassword" autocomplete="off" /></label>
+    </div>
+    <div class="msg-line err" id="editErr"></div>
+    <div class="actions" style="justify-content:flex-end;margin-top:10px">
+      <button class="btn ghost" id="editCancel">Bekor qilish</button>
+      <button class="btn" id="editSave">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chat viewer modal -->
+<div class="modal-bg" id="chatModal">
+  <div class="modal">
+    <h3 id="cvTitle">Chat</h3>
+    <div class="sub" id="cvSub"></div>
+    <div class="body" id="cvBody"></div>
+    <div class="foot">
+      <button class="btn danger small" id="cvDelete">Chatni o'chirish</button>
+      <button class="btn ghost" id="cvClose">Yopish</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  const COLORS = ["#e17076", "#7bc862", "#e5ca77", "#65aadd", "#a695e7", "#ee7aae", "#6ec9cb"];
+  const colorFor = s => COLORS[[...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
+  const USERNAME_RE = /^[a-z][a-z0-9_]{4,31}$/;
+  let me = null;
+  let users = [];
+  let editingId = null;
+  let viewingChatId = null;
+
+  async function api(method, url, body) {
+    const opts = { method, credentials: "same-origin", headers: {} };
+    if (body !== undefined) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+    const r = await fetch(url, opts);
+    let data = null; try { data = await r.json(); } catch (_) {}
+    if (!r.ok) {
+      const err = new Error((data && data.error) || ("Xato: " + r.status));
+      err.status = r.status; throw err;
+    }
+    return data;
+  }
+  function fmtDate(ts) {
+    return new Date(ts).toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+  function avatar(u, size) {
+    const s = size || 32;
+    if (u.photo) return `<img src="${esc(u.photo)}" alt="" style="width:${s}px;height:${s}px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px" />`;
+    const ini = (u.name || u.username || "?").trim().split(/\s+/).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+    return `<span style="display:inline-flex;align-items:center;justify-content:center;width:${s}px;height:${s}px;border-radius:50%;background:${colorFor(u.id)};color:#fff;font-size:${Math.round(s * .4)}px;font-weight:600;vertical-align:middle;margin-right:8px">${esc(ini)}</span>`;
+  }
+
+  // ---------- Login ----------
+  $("loginForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    $("loginErr").textContent = "";
+    try {
+      const data = await api("POST", "/api/auth/login", { username: $("aLogin").value.trim().toLowerCase(), password: $("aPass").value });
+      if (data.user.role !== "admin") {
+        $("loginErr").textContent = "Bu hisob admin emas";
+        await api("POST", "/api/auth/logout");
+        return;
+      }
+      me = data.user;
+      showPanel();
+    } catch (err) { $("loginErr").textContent = err.message; }
+  });
+
+  function showPanel() {
+    $("loginView").classList.add("hidden");
+    $("panelView").classList.remove("hidden");
+    loadStats();
+    loadUsers();
+  }
+
+  $("logoutBtn").addEventListener("click", async () => {
+    try { await api("POST", "/api/auth/logout"); } catch (_) {}
+    location.reload();
+  });
+
+  // ---------- Tabs ----------
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("active", x === t));
+    const name = t.dataset.tab;
+    ["users", "create", "chats"].forEach(n => $("tab-" + n).classList.toggle("hidden", n !== name));
+    if (name === "users") loadUsers();
+    if (name === "chats") loadChats();
+  }));
+
+  // ---------- Stats ----------
+  async function loadStats() {
+    try {
+      const s = await api("GET", "/api/admin/stats");
+      $("stats").textContent = `Foydalanuvchilar: ${s.users} · Bloklangan: ${s.blocked} · Chatlar: ${s.chats} · Xabarlar: ${s.messages}`;
+    } catch (_) {}
+  }
+
+  // ---------- Users ----------
+  async function loadUsers() {
+    try {
+      const data = await api("GET", "/api/admin/users");
+      users = data.users;
+      renderUsers();
+    } catch (e) { $("usersBody").innerHTML = ""; $("usersEmpty").textContent = e.message; $("usersEmpty").classList.remove("hidden"); }
+  }
+  function renderUsers() {
+    const q = $("userSearch").value.trim().toLowerCase();
+    const list = users.filter(u => (u.name + " " + u.username).toLowerCase().includes(q));
+    $("usersEmpty").classList.toggle("hidden", list.length > 0);
+    $("usersBody").innerHTML = list.map(u => {
+      const badges = [
+        u.role === "admin" ? `<span class="badge admin">admin</span>` : "",
+        u.blocked ? `<span class="badge blocked">bloklangan</span>` : `<span class="badge ok">faol</span>`,
+      ].join(" ");
+      const isMe = me && u.id === me.id;
+      return `
+        <tr>
+          <td>${avatar(u)}${esc(u.name || "—")}<div class="sub">@${esc(u.username)}</div></td>
+          <td>${u.chatCount}</td>
+          <td>${badges}</td>
+          <td class="sub">${fmtDate(u.createdAt)}</td>
+          <td><div class="actions">
+            <button class="btn ghost small" data-act="edit" data-id="${esc(u.id)}">Tahrirlash</button>
+            ${isMe ? "" : `<button class="btn warn small" data-act="block" data-id="${esc(u.id)}">${u.blocked ? "Blokdan chiqarish" : "Bloklash"}</button>
+            <button class="btn danger small" data-act="delete" data-id="${esc(u.id)}">O'chirish</button>`}
+          </div></td>
+        </tr>`;
+    }).join("");
+  }
+  $("userSearch").addEventListener("input", renderUsers);
+
+  $("usersBody").addEventListener("click", async e => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    const u = users.find(x => x.id === btn.dataset.id);
+    if (!u) return;
+    if (btn.dataset.act === "edit") openEdit(u);
+    if (btn.dataset.act === "block") {
+      const next = !u.blocked;
+      if (!confirm(`@${u.username} ${next ? "bloklansinmi? (hozir kirgan sessiyasi ham tugaydi)" : "blokdan chiqarilsinmi?"}`)) return;
+      try { await api("PATCH", `/api/admin/users/${encodeURIComponent(u.id)}`, { blocked: next }); loadUsers(); loadStats(); }
+      catch (err) { alert(err.message); }
+    }
+    if (btn.dataset.act === "delete") {
+      if (!confirm(`@${u.username} va uning barcha chatlari butunlay o'chirilsinmi? Bu qaytarib bo'lmaydi.`)) return;
+      try { await api("DELETE", `/api/admin/users/${encodeURIComponent(u.id)}`); loadUsers(); loadStats(); }
+      catch (err) { alert(err.message); }
+    }
+  });
+
+  // ---------- Edit ----------
+  function openEdit(u) {
+    editingId = u.id;
+    $("editTitle").textContent = "@" + u.username;
+    $("eName").value = u.name || "";
+    $("eUsername").value = u.username || "";
+    $("ePassword").value = "";
+    $("editErr").textContent = "";
+    $("editModal").classList.add("show");
+  }
+  $("editCancel").addEventListener("click", () => $("editModal").classList.remove("show"));
+  $("editSave").addEventListener("click", async () => {
+    const body = { name: $("eName").value.trim(), username: $("eUsername").value.trim().toLowerCase() };
+    const pw = $("ePassword").value;
+    if (!body.name) { $("editErr").textContent = "Ism kiriting"; return; }
+    if (!USERNAME_RE.test(body.username)) { $("editErr").textContent = "Login noto'g'ri"; return; }
+    if (pw) body.password = pw;
+    try {
+      await api("PATCH", `/api/admin/users/${encodeURIComponent(editingId)}`, body);
+      $("editModal").classList.remove("show");
+      loadUsers();
+    } catch (err) { $("editErr").textContent = err.message; }
+  });
+
+  // ---------- Create ----------
+  $("createBtn").addEventListener("click", async () => {
+    const username = $("cUsername").value.trim().toLowerCase();
+    const name = $("cName").value.trim();
+    const password = $("cPassword").value;
+    const msg = $("createMsg");
+    msg.style.color = "var(--danger)";
+    if (!USERNAME_RE.test(username)) { msg.textContent = "Login noto'g'ri: harf bilan boshlansin, 5–32 belgi, a–z, 0–9, _"; return; }
+    if (password.length < 6) { msg.textContent = "Parol kamida 6 belgi bo'lsin"; return; }
+    try {
+      await api("POST", "/api/admin/users", { username, name: name || username, password });
+      msg.style.color = "var(--ok)";
+      msg.textContent = `✓ Yaratildi: login "${username}", parol "${password}". Foydalanuvchiga yetkazing.`;
+      $("cUsername").value = ""; $("cName").value = ""; $("cPassword").value = "";
+      loadStats();
+    } catch (err) { msg.textContent = err.message; }
+  });
+
+  // ---------- Chats ----------
+  let allChats = [];
+  async function loadChats() {
+    try {
+      const data = await api("GET", "/api/admin/chats");
+      allChats = data.chats;
+      renderChats();
+    } catch (e) { $("chatsBody").innerHTML = ""; }
+  }
+  function renderChats() {
+    const q = $("chatSearch").value.trim().toLowerCase();
+    const list = allChats.filter(c => c.participants.map(p => p.name + " " + p.username).join(" ").toLowerCase().includes(q));
+    $("chatsEmpty").classList.toggle("hidden", list.length > 0);
+    $("chatsBody").innerHTML = list.map(c => `
+      <tr>
+        <td>${c.participants.map(p => `${avatar(p, 24)}${esc(p.name || p.username)} <span class="sub">@${esc(p.username)}</span>`).join("<br>")}</td>
+        <td>${c.messageCount}</td>
+        <td class="sub">${fmtDate(c.lastTs)}</td>
+        <td><div class="actions">
+          <button class="btn ghost small" data-open="${esc(c.id)}">Ko'rish</button>
+          <button class="btn danger small" data-del="${esc(c.id)}">O'chirish</button>
+        </div></td>
+      </tr>`).join("");
+  }
+  $("chatSearch").addEventListener("input", renderChats);
+
+  $("chatsBody").addEventListener("click", async e => {
+    const open = e.target.closest("button[data-open]");
+    const del = e.target.closest("button[data-del]");
+    if (open) return openChatViewer(open.dataset.open);
+    if (del) {
+      if (!confirm("Bu chat butunlay o'chirilsinmi?")) return;
+      try { await api("DELETE", `/api/admin/chats/${encodeURIComponent(del.dataset.del)}`); loadChats(); loadStats(); }
+      catch (err) { alert(err.message); }
+    }
+  });
+
+  async function openChatViewer(id) {
+    try {
+      const data = await api("GET", `/api/admin/chats/${encodeURIComponent(id)}`);
+      viewingChatId = id;
+      $("cvTitle").textContent = data.chat.participants.map(p => p.name || p.username).join(" ↔ ");
+      $("cvSub").textContent = `Oxirgi ${data.messages.length} ta xabar`;
+      $("cvBody").innerHTML = data.messages.length
+        ? data.messages.map(m => `
+            <div class="m-msg">
+              <div class="who">${esc(m.fromName)} <span class="t">· ${fmtDate(m.ts)}</span></div>
+              <div class="txt">${esc(m.text)}</div>
+            </div>`).join("")
+        : `<div class="empty">Xabarlar yo'q</div>`;
+      $("cvBody").scrollTop = $("cvBody").scrollHeight;
+      $("chatModal").classList.add("show");
+    } catch (err) { alert(err.message); }
+  }
+  $("cvClose").addEventListener("click", () => $("chatModal").classList.remove("show"));
+  $("cvDelete").addEventListener("click", async () => {
+    if (!viewingChatId) return;
+    if (!confirm("Bu chat butunlay o'chirilsinmi?")) return;
+    try {
+      await api("DELETE", `/api/admin/chats/${encodeURIComponent(viewingChatId)}`);
+      $("chatModal").classList.remove("show");
+      loadChats(); loadStats();
+    } catch (err) { alert(err.message); }
+  });
+
+  // ---------- Init ----------
+  async function init() {
+    try {
+      const data = await api("GET", "/api/me");
+      if (data.user.role !== "admin") { $("loginErr").textContent = "Bu sahifa faqat adminlar uchun"; return; }
+      me = data.user;
+      showPanel();
+    } catch (_) { /* login formasi ko'rinadi */ }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
