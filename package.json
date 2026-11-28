@@ -1,0 +1,17 @@
+{
+  "name": "secretgram",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Private messaging web app with an admin-managed account system",
+  "scripts": {
+    "dev": "netlify dev",
+    "start": "netlify dev",
+    "legacy": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.12"
+  }
+}

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Secretgram · Admin</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <div id="login-screen" class="screen hidden">
+    <form id="login-form" class="card">
+      <h1>Admin sign-in</h1>
+      <label>Username <input name="username" autocomplete="username" required></label>
+      <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Sign in</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </div>
+
+  <div id="dash" class="admin hidden">
+    <header class="admin-head">
+      <h1>Secretgram admin</h1>
+      <span id="admin-name" class="muted"></span>
+      <a href="/">Open chat</a>
+      <button id="logout-btn" class="ghost">Log out</button>
+    </header>
+    <p id="notice" class="notice"></p>
+
+    <section class="panel">
+      <h2>Create account</h2>
+      <form id="create-form" class="grid">
+        <label>Username <input name="username" pattern="[A-Za-z0-9_]{3,32}" required placeholder="alice"></label>
+        <label>Display name <input name="displayName" maxlength="64" placeholder="Alice"></label>
+        <label>Password
+          <span class="pw">
+            <input name="password" type="text" minlength="8" required>
+            <button type="button" id="gen-pass" class="ghost">Generate</button>
+          </span>
+        </label>
+        <div><button type="submit">Create account</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Accounts</h2>
+      <table>
+        <thead>
+          <tr><th></th><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Created</th><th></th></tr>
+        </thead>
+        <tbody id="users"></tbody>
+      </table>
+    </section>
+
+    <section id="edit-card" class="panel hidden">
+      <h2 id="edit-title"></h2>
+      <form id="edit-form" class="grid">
+        <label>Display name <input name="displayName" maxlength="64" required></label>
+        <label>Username <input name="username" pattern="[A-Za-z0-9_]{3,32}" required></label>
+        <label>New password (leave blank to keep)
+          <input name="password" type="text" minlength="8" autocomplete="new-password">
+        </label>
+        <div>
+          <button type="submit">Save</button>
+          <button type="button" id="edit-cancel" class="ghost">Close</button>
+        </div>
+      </form>
+      <p id="edit-error" class="error"></p>
+    </section>
+  </div>
+
+  <script src="/common.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>
